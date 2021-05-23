@@ -1,7 +1,7 @@
 # ligue-of-sport
 
 Вывод списка библиотек на базе VueJS + Vuex.
-Визуальная сторана - библиотека Vuetify
+Визуальная сторона - библиотека Vuetify
 
 ## Project setup
 
