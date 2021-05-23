@@ -1,26 +1,25 @@
 <template>
-  <div id="app">
-    <Libraries />
-  </div>
+  <v-app>
+    <v-main>
+      <v-app-bar class="mb-7">
+        <v-toolbar-title>{{ appTitle }}</v-toolbar-title>
+      </v-app-bar>
+      <Libraries />
+    </v-main>
+  </v-app>
 </template>
 
 <script>
 import Libraries from "@/components/libraries/libraries.vue";
 export default {
   name: "App",
+
   components: {
     Libraries,
   },
+
+  data: () => ({
+    appTitle: "Список библиотек",
+  }),
 };
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>

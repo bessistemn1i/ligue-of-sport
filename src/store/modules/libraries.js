@@ -16,7 +16,7 @@ export default {
         async fetchLibrariesList(ctx) {
             const librariesList = await fetch("/mock/libraries.json");
             const res = await librariesList.json()
-            const packOfLibraries = res.slice(0, 10);
+            const packOfLibraries = res.slice(0, 4);
             console.log(packOfLibraries);
             ctx.commit('updateLibraries', packOfLibraries)
         }
