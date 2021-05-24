@@ -35,7 +35,7 @@
       <v-col cols="12" class="d-flex flex-row flex-wrap justify-center">
         <v-virtual-scroll
           :items="libs"
-          item-height="450px"
+          item-height="600px"
           height="600"
           max-width="1185"
         >
@@ -174,4 +174,9 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.libraries-container {
+  width: 100%;
+  max-width: 1200px;
+}
+</style>

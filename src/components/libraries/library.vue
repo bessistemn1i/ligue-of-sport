@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="lib-container">
     <header v-if="currentLibrary" class="lib-header">
       <v-img
         height="420"
@@ -48,4 +48,9 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.lib-container {
+  width: 100%;
+  max-width: 1200px;
+}
+</style>
