@@ -34,6 +34,7 @@
     <v-row>
       <v-col cols="12" class="d-flex flex-row flex-wrap justify-center">
         <v-virtual-scroll
+          bench="10"
           :items="libs"
           item-height="600px"
           height="600"
@@ -96,6 +97,11 @@
         </v-col> -->
       </v-col>
     </v-row>
+    <v-row>
+      <v-col cols="12">
+        <v-btn @click="loadMoreLibraries">Загрузить больше</v-btn>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -112,7 +118,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["librariesList", "filteredLibs"]),
+    ...mapGetters(["librariesList", "filteredLibs", "downloadPosition"]),
     /**
      * Получаем список городов для фильтрации
      */
@@ -135,6 +141,9 @@ export default {
     },
   },
   methods: {
+    loadMoreLibraries() {
+      this.$store.dispatch("fetchLibrariesList", this.downloadPosition + 10);
+    },
     /**
      * Фильтрация по названию города/области
      */

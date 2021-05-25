@@ -1,5 +1,6 @@
 export default {
     state: {
+        downloadedLibrariesFrom: 0,
         libraries: [],
         library: null,
         filtered: []
@@ -28,11 +29,15 @@ export default {
          */
         filteredLibs: state => {
             return state.filtered
+        },
+        downloadPosition: state => {
+            return state.downloadedLibrariesFrom
         }
     },
     mutations: {
-        updateLibraries(state, libraries) {
-            state.libraries = libraries;
+        updateLibraries(state, obj) {
+            state.libraries = [...state.libraries, ...obj.pack];
+            state.downloadedLibrariesFrom = obj.from
         },
         updateLibrary(state, lib) {
             state.library = lib
@@ -45,11 +50,16 @@ export default {
         }
     },
     actions: {
-        async fetchLibrariesList({commit}) {
+        async fetchLibrariesList({ commit }, from = 0) {
+            console.log(from);
             const librariesList = await fetch("/mock/libraries.json");
             const res = await librariesList.json()
-            const packOfLibraries = res.slice(0, 15);
-            commit('updateLibraries', packOfLibraries)
+            const packOfLibraries = res.slice(from, from + 10);
+            const obj = {
+                pack: packOfLibraries,
+                from
+            }
+            commit('updateLibraries', obj)
         },
         async fetchLibrary({ commit }, id) {
             const librariesList = await fetch("/mock/libraries.json");
