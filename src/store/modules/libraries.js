@@ -69,7 +69,8 @@ export default {
         },
         async filterByCity({ commit }, obj) {
             const libs = obj.libs;
-            const result = libs.filter((el) => el.data.general.locale.name === obj.city);
+            const result = libs.filter((el) => (el.data.general.locale.name).toLowerCase().indexOf(obj.city.toLowerCase()) >= 0);
+            console.log(obj.city, result);
             commit('updateLibraryByCity', result)
         },
         async resetFilters({ commit }) {

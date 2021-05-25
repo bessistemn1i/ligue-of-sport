@@ -19,6 +19,16 @@
           >Сбросить фильтр</v-btn
         >
       </v-col>
+      <v-col cols="6">
+        <v-form>
+          <h3>Или ведите названию населенного пункта</h3>
+          <v-text-field
+            v-model="nameOfCity"
+            label="Название населенного пункта"
+          >
+          </v-text-field>
+        </v-form>
+      </v-col>
       <v-col cols="12" md="6" class="d-flex align-start flex-column">
         <h3>Сортировать по:</h3>
         <v-chip @click="sortByTitle"> Названию </v-chip>
@@ -115,7 +125,13 @@ export default {
   data() {
     return {
       sortedLibsByTitle: [],
+      nameOfCity: "",
     };
+  },
+  watch: {
+    nameOfCity(city) {
+      this.filterByCity(city);
+    },
   },
   computed: {
     ...mapGetters(["librariesList", "filteredLibs", "downloadPosition"]),
