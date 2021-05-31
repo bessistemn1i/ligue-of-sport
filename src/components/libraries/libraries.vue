@@ -7,15 +7,12 @@
           <v-chip
             v-for="(city, cityIdx) in listOfCities"
             :key="cityIdx"
-            @click="filterByCity(city)"
+            @click="filterLibsByTitle(city, libs)"
           >
             {{ city }}
           </v-chip>
         </v-chip-group>
-        <v-btn
-          v-show="filteredLibs.length > 0"
-          color="primary"
-          @click="resetFilters()"
+        <v-btn v-show="selectedFilter" color="primary" @click="resetFilters"
           >Сбросить фильтр</v-btn
         >
       </v-col>
@@ -24,6 +21,7 @@
           <h3>Или ведите названию населенного пункта</h3>
           <v-text-field
             v-model="nameOfCity"
+            clearable
             label="Название населенного пункта"
           >
           </v-text-field>
@@ -31,18 +29,22 @@
       </v-col>
       <v-col cols="12" md="6" class="d-flex align-start flex-column">
         <h3>Сортировать по:</h3>
-        <v-chip @click="sortByTitle"> Названию </v-chip>
-        <v-btn
-          v-show="sortedLibsByTitle.length > 0"
-          color="primary"
-          @click="resetSort"
-          class="mt-3"
+        <v-chip @click="sortLibsByTitle(libs)"> Названию </v-chip>
+        <v-btn v-show="sortType" @click="resetSort" color="primary" class="mt-3"
           >Сбросить сортировку</v-btn
         >
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="12" class="d-flex flex-row flex-wrap justify-center">
+      <v-col cols="12"></v-col>
+      <v-col v-if="nameOfCity && libs && libs.length === 0" cols="12">
+        <p>К сожалению, библиотек по вашему запросу не найдено</p>
+      </v-col>
+      <v-col
+        v-if="libs"
+        cols="12"
+        class="d-flex flex-row flex-wrap justify-center"
+      >
         <v-virtual-scroll
           bench="10"
           :items="libs"
@@ -74,41 +76,13 @@
             </v-card>
           </template>
         </v-virtual-scroll>
-        <!-- <v-col
-          v-for="lib in libs"
-          :key="lib.data.general.id"
-          cols="10"
-          sm="8"
-          md="5"
-          lg="4"
-          class="mb-12"
-        >
-          <v-card max-width="450px">
-            <header class="lib-header">
-              <v-img
-                height="120"
-                :src="lib.data.general.image.url"
-                :alt="lib.data.general.image.title"
-                class="lib-img"
-              ></v-img>
-              <v-card-title class="lib-title">{{
-                lib.data.general.name
-              }}</v-card-title>
-              <v-card-subtitle
-                v-html="lib.data.general.description"
-              ></v-card-subtitle>
-              <v-card-actions>
-                <router-link :to="`library/${lib.data.general.id}`"
-                  >Подробнее</router-link
-                >
-              </v-card-actions>
-            </header>
-          </v-card>
-        </v-col> -->
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="12">
+      <v-col
+        cols="12"
+        v-show="libs && libs.length < librariesLength && !nameOfCity"
+      >
         <v-btn @click="loadMoreLibraries">Загрузить больше</v-btn>
       </v-col>
     </v-row>
@@ -119,22 +93,25 @@
 import { mapGetters } from "vuex";
 
 export default {
-  async mounted() {
-    this.$store.dispatch("fetchLibrariesList");
-  },
   data() {
     return {
-      sortedLibsByTitle: [],
-      nameOfCity: "",
+      nameOfCity: "", // название населенного пункта из строки поиска
+      selectedFilter: "", // выбранный город
+      sortType: "", // выбранный тип сортировки
+      isSort: false, // если нажата кнопки отсортировать
+      isFilter: false, // если нажата кнопки отфильтровать
     };
   },
   watch: {
     nameOfCity(city) {
-      this.filterByCity(city);
+      if (city) {
+        this.filterByTitle = true;
+        this.filterLibsByTitle(this.nameOfCity, this.libs);
+      }
     },
   },
   computed: {
-    ...mapGetters(["librariesList", "filteredLibs", "downloadPosition"]),
+    ...mapGetters(["librariesList", "downloadPosition", "librariesLength"]),
     /**
      * Получаем список городов для фильтрации
      */
@@ -148,52 +125,85 @@ export default {
      * Отображаем массив с библиотеками в зависимости от активных сортировок/фильтров
      */
     libs() {
-      if (this.sortedLibsByTitle.length > 0) {
-        return this.sortedLibsByTitle;
+      const filtered = this.isFilter
+        ? this.filterLibsByTitle(this.selectedFilter, sorted)
+        : this.nameOfCity
+        ? this.filterLibsByTitle(this.nameOfCity, this.librariesList)
+        : this.librariesList; // в переменную записываем либо отфильтрованный массив по текстовому полю, либо по выбранному городу (компонент v-chip), либо стартовый массив, если фильтрация не выбрана
+      let sorted = []; // в зависимости от флага записываем либо отсортированный отфильтрованный массив, либо отсортированный стартовый массив
+      if (this.isSort) {
+        sorted = filtered
+          ? this.sortLibsByTitle(filtered)
+          : this.sortLibsByTitle(this.librariesList);
       }
-      return this.filteredLibs.length > 0
-        ? this.filteredLibs
-        : this.librariesList;
+      if (!this.isSort) {
+        sorted = filtered ? filtered : this.librariesList;
+      }
+      return sorted;
     },
   },
   methods: {
+    /**
+     * @librariesList Массив для проведения сортировки
+     */
+    sortLibsByTitle(librariesList) {
+      this.sortType = "title"; // текущая сортировка - по заголовку
+      this.isSort = true; // записываем флаг что используется сортировка массива
+      if (librariesList) {
+        // если в массиве есть данные
+        const sorted = librariesList.slice(); // дубликат входящего массива
+        const sortedList = sorted.sort((lib1, lib2) => {
+          return lib1.data.general.name.toLowerCase() >
+            lib2.data.general.name.toLowerCase()
+            ? 1
+            : -1;
+        });
+        return sortedList;
+      }
+      return [];
+    },
+
+    /**
+     * @city Значение, получаемое из строки поиска. Если данное значение пустое, значит берем значение из выбора по городам - компонент v-chip
+     * @librariesList Массив библиотек для фильтрации (дефолтное значение - стартовый массив)
+     */
+    filterLibsByTitle(
+      city = this.nameOfCity,
+      librariesList = this.librariesList
+    ) {
+      this.selectedFilter = city; // выбранный город
+      this.isFilter = true; // записываем флаг - используется фильтрация
+      const filtered = librariesList.slice(); // дублируем массив, сохраняя оригинал
+      const result = filtered.filter(
+        (el) =>
+          el.data.general.locale.name
+            .toLowerCase()
+            .indexOf(city.toLowerCase()) >= 0
+      );
+      return result;
+    },
+
+    /**
+     * Запрос на получение еще 10 библиотек
+     */
     loadMoreLibraries() {
       this.$store.dispatch("fetchLibrariesList", this.downloadPosition + 10);
     },
+
     /**
-     * Фильтрация по названию города/области
+     * Сброс сортировок
      */
-    filterByCity(city) {
-      const obj = {
-        libs: this.librariesList,
-        city: city,
-      };
-      this.$store.dispatch("filterByCity", obj);
+    resetSort() {
+      this.sortType = "";
+      this.isSort = false;
     },
-    /**
-     * Сортировка по названию библиотеки
-     */
-    sortByTitle() {
-      const libs = this.libs.slice();
-      const sortedList = libs.sort((lib1, lib2) => {
-        return lib1.data.general.name.toLowerCase() >
-          lib2.data.general.name.toLowerCase()
-          ? 1
-          : -1;
-      });
-      this.sortedLibsByTitle = sortedList;
-    },
+
     /**
      * Сброс фильтров
      */
     resetFilters() {
-      this.$store.dispatch("resetFilters");
-    },
-    /**
-     * Сброс сортировки
-     */
-    resetSort() {
-      this.sortedLibsByTitle = [];
+      this.isFilter = false;
+      this.selectedFilter = "";
     },
   },
 };

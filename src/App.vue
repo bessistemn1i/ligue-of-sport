@@ -10,6 +10,9 @@
 
 <script>
 export default {
+  async mounted() {
+    this.$store.dispatch("fetchLibrariesList");
+  },
   data() {
     return {
       appTitle: "Библиотеки",
