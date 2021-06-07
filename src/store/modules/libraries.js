@@ -52,21 +52,33 @@ export default {
     },
     actions: {
         async fetchLibrariesList({ commit }, from = 0) {
-            const librariesList = await fetch("/mock/libraries.json");
-            const res = await librariesList.json()
-            const packOfLibraries = res.slice(from, from + 10);
-            const obj = {
-                pack: packOfLibraries,
-                from
+            try {
+                const librariesList = await fetch("/mock/libraries.json");
+                const res = await librariesList.json()
+                const packOfLibraries = res.slice(from, from + 10);
+                const obj = {
+                    pack: packOfLibraries,
+                    from
+                }
+                commit('updateLibraries', obj)
+                commit('updateLibrariesLength', res.length)
             }
-            commit('updateLibraries', obj)
-            commit('updateLibrariesLength', res.length)
+            catch (e) {
+                console.log('Error: ', e.message);
+            }
+            
         },
         async fetchLibrary({ commit }, id) {
-            const librariesList = await fetch("/mock/libraries.json");
-            const res = await librariesList.json()
-            const currentLib = res.find((lib) => lib.data.general.id === +id)
-            commit('updateLibrary', currentLib)
+            try {
+                const librariesList = await fetch("/mock/libraries.json");
+                const res = await librariesList.json()
+                const currentLib = res.find((lib) => lib.data.general.id === +id)
+                commit('updateLibrary', currentLib)
+            }
+            catch (e) {
+                console.log('Error: ', e.message);
+            }
+            
         },
     }
 };

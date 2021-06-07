@@ -108,6 +108,9 @@ export default {
         this.filterByTitle = true;
         this.filterLibsByTitle(this.nameOfCity, this.libs);
       }
+      if (!city) {
+        this.resetFilters();
+      }
     },
   },
   computed: {
