@@ -64,9 +64,14 @@
                 <v-card-title class="lib-title">{{
                   item.data.general.name
                 }}</v-card-title>
-                <v-card-subtitle
-                  v-html="item.data.general.description"
-                ></v-card-subtitle>
+                <p class="text-left">
+                  Район/Город:
+                  <strong>{{ item.data.general.locale.name }}</strong>
+                </p>
+
+                <v-card-subtitle>
+                  {{ item.data.general.description | sliceText }}
+                </v-card-subtitle>
                 <v-card-actions>
                   <router-link :to="`library/${item.data.general.id}`"
                     >Подробнее</router-link
@@ -81,7 +86,7 @@
     <v-row>
       <v-col
         cols="12"
-        v-show="libs && libs.length < librariesLength && !nameOfCity"
+        v-show="libs && libs.length + 10 <= librariesLength && !nameOfCity"
       >
         <v-btn @click="loadMoreLibraries">Загрузить больше</v-btn>
       </v-col>
@@ -95,11 +100,12 @@ import { mapGetters } from "vuex";
 export default {
   data() {
     return {
-      nameOfCity: "", // название населенного пункта из строки поиска
-      selectedFilter: "", // выбранный город
+      nameOfCity: null, // название населенного пункта из строки поиска
+      selectedFilter: null, // выбранный город
       sortType: "", // выбранный тип сортировки
       isSort: false, // если нажата кнопки отсортировать
       isFilter: false, // если нажата кнопки отфильтровать
+      libsLength: 0,
     };
   },
   watch: {
@@ -119,9 +125,7 @@ export default {
      * Получаем список городов для фильтрации
      */
     listOfCities() {
-      const cities = this.librariesList.map(
-        (el) => el.data.general.locale.name
-      );
+      const cities = this.libs.map((el) => el.data.general.locale.name);
       return [...new Set(cities)];
     },
     /**
@@ -143,6 +147,22 @@ export default {
         sorted = filtered ? filtered : this.librariesList;
       }
       return sorted;
+    },
+    filteredCity() {
+      const nameOfCity = this.nameOfCity;
+      const selectedFilter = this.selectedFilter;
+      if (nameOfCity) {
+        return nameOfCity;
+      }
+      return selectedFilter;
+    },
+  },
+  filters: {
+    sliceText(text) {
+      if (!text) return "";
+      const regExpRemoveTagsFromString = /<\/?[a-zA-Z]+>/gi;
+      text = text.slice(0, 250).replace(regExpRemoveTagsFromString, "");
+      return `${text}...`;
     },
   },
   methods: {
@@ -190,7 +210,11 @@ export default {
      * Запрос на получение еще 10 библиотек
      */
     loadMoreLibraries() {
-      this.$store.dispatch("fetchLibrariesList", this.downloadPosition + 10);
+      this.libsLength += this.libs.length;
+      this.$store.dispatch("fetchLibrariesList", {
+        city: this.filteredCity,
+        position: this.downloadPosition + 10,
+      });
     },
 
     /**
@@ -207,6 +231,7 @@ export default {
     resetFilters() {
       this.isFilter = false;
       this.selectedFilter = "";
+      this.$store.dispatch("resetLibrariesList", 0);
     },
   },
 };

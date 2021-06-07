@@ -11,7 +11,7 @@
 <script>
 export default {
   async mounted() {
-    this.$store.dispatch("fetchLibrariesList");
+    this.$store.dispatch("fetchLibrariesList", { city: null, position: 0 });
   },
   data() {
     return {

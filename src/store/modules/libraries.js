@@ -43,6 +43,10 @@ export default {
         updateLibrariesLength(state, length) {
             state.librariesLength = length
         },
+        resetLibrariesList(state, obj) {
+            state.libraries = obj.pack
+            state.downloadedLibrariesFrom = obj.from
+        },
         updateLibrary(state, lib) {
             state.library = lib
         },
@@ -51,14 +55,18 @@ export default {
         }
     },
     actions: {
-        async fetchLibrariesList({ commit }, from = 0) {
+        async fetchLibrariesList({ commit }, {city, position}) {
             try {
                 const librariesList = await fetch("/mock/libraries.json");
-                const res = await librariesList.json()
-                const packOfLibraries = res.slice(from, from + 10);
+                let res = await librariesList.json();
+                if (city) {
+                    res = res.filter((el) => el.data.general.locale.name.toLowerCase() === city.toLowerCase())
+                }
+                
+                const packOfLibraries = res.slice(position, position + 10);
                 const obj = {
                     pack: packOfLibraries,
-                    from
+                    from: position
                 }
                 commit('updateLibraries', obj)
                 commit('updateLibrariesLength', res.length)
@@ -80,5 +88,22 @@ export default {
             }
             
         },
+
+        async resetLibrariesList({ commit }, position) {
+            try {
+                const librariesList = await fetch("/mock/libraries.json");
+                let res = await librariesList.json();
+                const initialPackOfLibraries = res.slice(position, position + 10);
+                const obj = {
+                    pack: initialPackOfLibraries,
+                    from: position
+                }
+                commit('resetLibrariesList', obj)
+                commit('updateLibrariesLength', res.length)
+            }
+            catch (e) {
+                console.log('Error: ', e.message);
+            }
+        }
     }
 };
